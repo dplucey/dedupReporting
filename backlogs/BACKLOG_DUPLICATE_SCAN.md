@@ -233,31 +233,31 @@ Files touched:
 
 Depends on: Workstream A, Workstream B, Workstream C
 
-Status: Not Started
+Status: Complete
 
-Branch: `(tbd)`
+Branch: `feat-workstream-d-cli`
 
-- [ ] ITEM-013: Add scan command
+- [x] ITEM-013: Add scan command
   - Test first: `tests/test_cli.py::test_scan_command_writes_manifest_for_all_files` invokes the CLI against a temp directory and asserts manifest rows exist for every regular file.
   - Implementation: Add `dedup-scan scan ROOT... --manifest PATH` composition root wiring filesystem, scanner, hasher, and manifest writer.
   - Refactor: None.
 
-- [ ] ITEM-014: Add report command
+- [x] ITEM-014: Add report command
   - Test first: `tests/test_cli.py::test_report_command_reads_multiple_manifests_and_prints_duplicates` invokes the CLI with two manifests and asserts cross-run duplicates are printed.
   - Implementation: Add `dedup-scan report MANIFEST... --format text|json`.
   - Refactor: None.
 
-- [ ] ITEM-015: Keep CLI stack traces out of normal error output
+- [x] ITEM-015: Keep CLI stack traces out of normal error output
   - Test first: `tests/test_cli.py::test_cli_errors_are_generic_without_stack_traces` asserts malformed input exits non-zero and does not print traceback text.
   - Implementation: Add top-level CLI exception handling with concise error messages.
   - Refactor: None.
 
-- [ ] ITEM-022: Wire CLI interrupts into cooperative cancellation
+- [x] ITEM-022: Wire CLI interrupts into cooperative cancellation
   - Test first: `tests/test_cli.py::test_scan_command_wires_interrupt_signal_to_scan_service` invokes the scan command with an injected stop signal or simulated interrupt and asserts the command exits non-zero without traceback text.
   - Implementation: Wire CLI signal or interrupt handling into service-layer cancellation.
   - Refactor: None.
 
-- [ ] ITEM-030: Expose installed CLI command
+- [x] ITEM-030: Expose installed CLI command
   - Test first: `tests/test_cli.py::test_project_declares_dedup_scan_console_script` asserts `pyproject.toml` declares a `dedup-scan` console script pointing at the CLI entry point.
   - Implementation: Add the `dedup-scan` console script entry to package metadata.
   - Refactor: None.

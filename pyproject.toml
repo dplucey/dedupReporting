@@ -9,5 +9,8 @@ description = "Read-only duplicate file scan reporting tools"
 requires-python = ">=3.14"
 dependencies = []
 
+[project.scripts]
+dedup-scan = "dedup_scan.cli:main"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]

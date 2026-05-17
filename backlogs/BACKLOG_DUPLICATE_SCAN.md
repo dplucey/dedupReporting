@@ -126,31 +126,31 @@ Files touched:
 
 Depends on: Workstream 0
 
-Status: Not Started
+Status: Complete
 
-Branch: `(tbd)`
+Branch: `feat-workstream-a-filesystem-scan`
 
-- [ ] ITEM-004: Scan regular files and hash every file
+- [x] ITEM-004: Scan regular files and hash every file
   - Test first: `tests/service/test_scanning.py::test_scan_hashes_every_regular_file_even_when_sizes_are_unique` creates unique-size files and asserts every regular file receives a SHA-256 digest.
   - Implementation: Add scan orchestration that walks supplied roots, hashes every regular file, and returns domain records.
   - Refactor: None.
 
-- [ ] ITEM-005: Skip symlinks by default
+- [x] ITEM-005: Skip symlinks by default
   - Test first: `tests/infrastructure/test_filesystem.py::test_walk_skips_symlinks_by_default` creates a symlink and asserts it is not yielded as a regular file.
   - Implementation: Add filesystem walker defaulting to no symlink following.
   - Refactor: None.
 
-- [ ] ITEM-006: Continue after unreadable file errors
+- [x] ITEM-006: Continue after unreadable file errors
   - Test first: `tests/service/test_scanning.py::test_scan_records_error_and_continues_after_unreadable_file` asserts one unreadable file yields an error record while other files still hash.
   - Implementation: Convert per-file stat/open failures into `status="error"` records.
   - Refactor: Extract small helpers only if scan orchestration exceeds 50 lines.
 
-- [ ] ITEM-019: Stop scanning before the next file when cancellation is requested
+- [x] ITEM-019: Stop scanning before the next file when cancellation is requested
   - Test first: `tests/service/test_scanning.py::test_scan_stops_before_hashing_next_file_when_stop_signal_is_set` creates multiple files, sets a stop signal after the first file is processed, and asserts later files are not hashed.
   - Implementation: Add a cooperative stop signal to the scan service and check it before each file.
   - Refactor: None.
 
-- [ ] ITEM-020: Stop file hashing between chunks when cancellation is requested
+- [x] ITEM-020: Stop file hashing between chunks when cancellation is requested
   - Test first: `tests/service/test_scanning.py::test_hash_file_checks_stop_signal_between_chunks` hashes a file through a chunked reader that sets the stop signal after one chunk and asserts hashing stops before consuming the rest.
   - Implementation: Hash files in chunks, check the stop signal between chunks, and document that cancellation cannot interrupt an OS read already in progress.
   - Refactor: None.

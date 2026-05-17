@@ -1,3 +1,3 @@
 # Open Backlogs
 
-- `backlogs/BACKLOG_DUPLICATE_SCAN.md` - Duplicate file scan tooling; Status: OPEN
+No currently open backlogs.

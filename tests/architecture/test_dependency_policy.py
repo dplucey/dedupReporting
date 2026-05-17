@@ -10,3 +10,11 @@ def test_project_has_no_runtime_dependencies() -> None:
     project = pyproject["project"]
 
     assert project.get("dependencies", []) == []
+
+
+def test_project_remains_stdlib_only_after_all_workstreams() -> None:
+    pyproject = tomllib.loads((PROJECT_ROOT / "pyproject.toml").read_text())
+    project = pyproject["project"]
+
+    assert project.get("dependencies", []) == []
+    assert project["scripts"] == {"dedup-scan": "dedup_scan.cli:main"}

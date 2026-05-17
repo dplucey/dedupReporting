@@ -1,8 +1,11 @@
 # Duplicate File Scan Backlog
 
 Planned: 2026-05-17
-Status: OPEN
-Completed: (tbd)
+Status: COMPLETE
+Completed: 2026-05-16
+Archived: 2026-05-16
+Total items: 30
+Carried forward: None
 
 ## Problem
 
@@ -279,51 +282,51 @@ Files touched:
 
 Depends on: Workstream D
 
-Status: Not Started
+Status: Complete
 
-Branch: `(tbd)`
+Branch: `feat-workstream-z-invariants`
 
-- [ ] ITEM-016: Verify scan commands do not mutate scanned directories
+- [x] ITEM-016: Verify scan commands do not mutate scanned directories
   - Test first: `tests/architecture/test_read_only_behavior.py::test_scan_preserves_file_content_mode_and_directory_entries` records file content, mode, and directory entries before scan and asserts they are unchanged afterward.
   - Implementation: Add invariant test around the public CLI or service entry point.
   - Refactor: None.
 
-- [ ] ITEM-017: Document manifest contract and operating model
+- [x] ITEM-017: Document manifest contract and operating model
   - Test first: `tests/test_readme_examples.py::test_readme_scan_and_report_commands_match_cli_parser` asserts documented commands remain parseable.
   - Implementation: Add README usage, schema example, read-only guarantee, data classification note, and known limitations.
   - Refactor: None.
 
-- [ ] ITEM-018: Run final quality gate
+- [x] ITEM-018: Run final quality gate
   - Test first: `tests/architecture/test_quality_gate_documented.py::test_readme_lists_local_quality_gate_commands` asserts the documented quality gate includes formatter, linter, type/correctness check, security scan placeholder, secret scan placeholder, and tests.
   - Implementation: Document the local quality gate commands available for this stdlib-first project.
   - Refactor: None.
 
-- [ ] ITEM-023: Verify source and test tree stay mirrored
+- [x] ITEM-023: Verify source and test tree stay mirrored
   - Test first: `tests/architecture/test_source_test_mirroring.py::test_every_non_package_source_module_has_matching_test_module` asserts every `dedup_scan/**/*.py` module except package `__init__.py` files has a predictable mirrored test file.
   - Implementation: Add an architecture test that maps source modules to test paths.
   - Refactor: None.
 
-- [ ] ITEM-024: Verify reporting never touches scanned filesystem paths
+- [x] ITEM-024: Verify reporting never touches scanned filesystem paths
   - Test first: `tests/architecture/test_reporting_boundaries.py::test_reporting_uses_manifest_records_without_filesystem_access` builds manifest records with nonexistent original paths and asserts report generation succeeds without stat or open calls.
   - Implementation: Add an architecture or service test proving report flow consumes manifests only.
   - Refactor: None.
 
-- [ ] ITEM-025: Verify dependency policy remains stdlib-only
+- [x] ITEM-025: Verify dependency policy remains stdlib-only
   - Test first: `tests/architecture/test_dependency_policy.py::test_project_remains_stdlib_only_after_all_workstreams` asserts runtime dependencies are still empty after CLI, reporting, and scanning modules are added.
   - Implementation: Extend dependency policy checks to cover the completed package metadata.
   - Refactor: None.
 
-- [ ] ITEM-026: Verify service layer does not import infrastructure
+- [x] ITEM-026: Verify service layer does not import infrastructure
   - Test first: `tests/architecture/test_import_boundaries.py::test_service_layer_does_not_import_infrastructure_adapters` asserts service modules do not import `dedup_scan.infrastructure`.
   - Implementation: Extend AST import-boundary checks.
   - Refactor: None.
 
-- [ ] ITEM-027: Verify I/O APIs expose cooperative cancellation
+- [x] ITEM-027: Verify I/O APIs expose cooperative cancellation
   - Test first: `tests/architecture/test_cancellation_contract.py::test_public_io_entrypoints_accept_stop_signal` asserts scan, manifest read/write, and CLI composition paths expose or document cooperative cancellation.
   - Implementation: Add signature or docstring-level architecture checks for public I/O entry points.
   - Refactor: None.
 
-- [ ] ITEM-028: Verify security acceptance criteria
+- [x] ITEM-028: Verify security acceptance criteria
   - Test first: `tests/architecture/test_security_acceptance.py::test_scan_and_report_security_acceptance_criteria_are_enforced` asserts no outbound network imports, no scanned-path mutation APIs in scan/report modules, no stack traces in CLI errors, and no file-content fields in manifest or report records.
   - Implementation: Add architecture checks and focused CLI/service tests for the documented security criteria, scoped so manifest writes are allowed only for the explicitly requested manifest output path.
   - Refactor: None.

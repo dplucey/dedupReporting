@@ -4,13 +4,27 @@ Read-only duplicate file scan reporting tools.
 
 `dedup-scan` scans regular files, records file path metadata and SHA-256 content hashes in JSON Lines manifests, and reports duplicate-content groups from one or more manifests. Scans are report-only: they do not delete, move, link, chmod, chown, or rewrite scanned files.
 
-## Usage
+## Local Usage
+
+From a checkout, run the CLI module with the project venv:
 
 ```bash
+$ .venv/bin/python -m dedup_scan.cli scan /data/photos --manifest manifests/photos.jsonl
+$ .venv/bin/python -m dedup_scan.cli report manifests/photos.jsonl manifests/archive.jsonl --format text
+$ .venv/bin/python -m dedup_scan.cli report manifests/photos.jsonl --format json
+```
+
+## Installed Usage
+
+After installing the package, the console command is `dedup-scan`:
+
+```bash
+$ .venv/bin/python -m pip install -e .
 $ dedup-scan scan /data/photos --manifest manifests/photos.jsonl
 $ dedup-scan report manifests/photos.jsonl manifests/archive.jsonl --format text
 $ dedup-scan report manifests/photos.jsonl --format json
 ```
+
 
 Default behavior:
 
@@ -18,6 +32,8 @@ Default behavior:
 - Do not follow symlinks.
 - Require `--manifest` to be outside every scanned root.
 - Continue after unreadable files by writing `status: "error"` rows.
+- Stream scan records to a temporary manifest while scanning, then atomically replace the final manifest path on success.
+- Print scan progress to stderr every 1000 processed records.
 - Report duplicate groups only.
 - Return zero for successful scans and reports, including reports with no duplicates.
 - Return non-zero for invalid arguments, invalid manifests, interrupted scans, or manifest write failures.
@@ -48,7 +64,7 @@ File paths, directory names, hashes, sizes, mtimes, and scan IDs are Internal me
 
 Reporting consumes manifests only. It does not open, stat, delete, move, link, chmod, chown, or rewrite original paths listed in manifests.
 
-Cancellation is cooperative. Scan traversal checks for stop requests before each file. Hashing checks between chunks and cannot interrupt an OS read already in progress. Manifest reading and writing check between rows/records and cannot interrupt an OS read or write already in progress.
+Cancellation is cooperative. Scan traversal checks for stop requests before each file. Hashing checks between chunks and cannot interrupt an OS read already in progress. Manifest reading and writing check between rows/records and cannot interrupt an OS read or write already in progress. A hidden temporary manifest is created in the target manifest directory during scans and is replaced into the final path only after a successful scan.
 
 Known limitations:
 

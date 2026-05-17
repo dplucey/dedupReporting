@@ -25,7 +25,7 @@ def walk_regular_files(roots: Sequence[Path]) -> Iterator[Path]:
 
 
 def _walk_directory(root: Path) -> Iterator[Path]:
-    for path in sorted(root.rglob("*")):
+    for path in root.rglob("*"):
         if path.is_symlink():
             continue
         if path.is_file():

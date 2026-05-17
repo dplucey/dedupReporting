@@ -2,13 +2,16 @@ import argparse
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Protocol
+from typing import Callable, Protocol
 
 from dedup_scan.infrastructure.filesystem import FilesystemReader, walk_regular_files
 from dedup_scan.infrastructure.manifest_jsonl import read_manifests, write_manifest
 from dedup_scan.infrastructure.reporters import render_json_report, render_text_report
 from dedup_scan.service.reporting import duplicate_groups
 from dedup_scan.service.scanning import StopRequested, scan_files
+
+
+PROGRESS_EVERY_RECORDS = 1000
 
 
 class StopSignal(Protocol):
@@ -65,11 +68,20 @@ def _scan_command(args: argparse.Namespace, *, stop_signal: StopSignal | None) -
         scan_id=_scan_id(scanned_at),
         scanned_at=scanned_at,
         stop_signal=stop_signal,
+        after_record=_progress_reporter(),
     )
     if stop_signal is not None and stop_signal.is_set():
         raise StopRequested("scan stopped")
     write_manifest(args.manifest, records, stop_signal=stop_signal)
     return 0
+
+
+def _progress_reporter() -> Callable[[int], None]:
+    def report(record_count: int) -> None:
+        if record_count % PROGRESS_EVERY_RECORDS == 0:
+            print(f"scanned={record_count}", file=sys.stderr)
+
+    return report
 
 
 def _validate_manifest_outside_roots(manifest_path: Path, roots: tuple[Path, ...]) -> None:

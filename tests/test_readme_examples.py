@@ -8,15 +8,15 @@ def test_readme_scan_and_report_commands_match_cli_parser() -> None:
     commands = [
         line.removeprefix("$ ").strip()
         for line in readme.splitlines()
-        if line.startswith("$ dedup-scan ")
+        if line.startswith("$ .venv/bin/python -m dedup_scan.cli ")
     ]
 
     assert commands == [
-        "dedup-scan scan /data/photos --manifest manifests/photos.jsonl",
-        "dedup-scan report manifests/photos.jsonl manifests/archive.jsonl --format text",
-        "dedup-scan report manifests/photos.jsonl --format json",
+        ".venv/bin/python -m dedup_scan.cli scan /data/photos --manifest manifests/photos.jsonl",
+        ".venv/bin/python -m dedup_scan.cli report manifests/photos.jsonl manifests/archive.jsonl --format text",
+        ".venv/bin/python -m dedup_scan.cli report manifests/photos.jsonl --format json",
     ]
 
     parser = _build_parser()
     for command in commands:
-        parser.parse_args(command.split()[1:])
+        parser.parse_args(command.split()[3:])

@@ -34,28 +34,25 @@ def scan_files(
     chunk_size: int = DEFAULT_CHUNK_SIZE,
     stop_signal: StopSignal | None = None,
     after_record: Callable[[int], None] | None = None,
-) -> list[FileHashRecord]:
-    records: list[FileHashRecord] = []
+) -> Iterator[FileHashRecord]:
+    record_count = 0
 
     for path in walk_files(roots):
         if _is_stopped(stop_signal):
             break
-        records.append(
-            _scan_one_file(
-                path=path,
-                roots=roots,
-                reader=reader,
-                scan_id=scan_id,
-                scanned_at=scanned_at,
-                algorithm=algorithm,
-                chunk_size=chunk_size,
-                stop_signal=stop_signal,
-            )
+        yield _scan_one_file(
+            path=path,
+            roots=roots,
+            reader=reader,
+            scan_id=scan_id,
+            scanned_at=scanned_at,
+            algorithm=algorithm,
+            chunk_size=chunk_size,
+            stop_signal=stop_signal,
         )
+        record_count += 1
         if after_record is not None:
-            after_record(len(records))
-
-    return records
+            after_record(record_count)
 
 
 def hash_file(

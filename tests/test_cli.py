@@ -19,7 +19,7 @@ def test_scan_command_writes_manifest_for_all_files(tmp_path: Path, capsys: pyte
     assert exit_code == 0
     assert capsys.readouterr().err == ""
     rows = [json.loads(line) for line in manifest_path.read_text(encoding="utf-8").splitlines()]
-    assert [row["relative_path"] for row in rows] == ["a.txt", "b.txt"]
+    assert {row["relative_path"] for row in rows} == {"a.txt", "b.txt"}
     assert {row["status"] for row in rows} == {"ok"}
     assert all(row["algorithm"] == "sha256" for row in rows)
 

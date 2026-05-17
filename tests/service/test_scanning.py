@@ -25,6 +25,30 @@ def test_scan_hashes_every_regular_file_even_when_sizes_are_unique() -> None:
     )
     reader = MultiFileReader(files)
 
+    records = list(
+        scan_files(
+            roots=(Path("/root"),),
+            walk_files=lambda roots: (fake_file.path for fake_file in files),
+            reader=reader,
+            scan_id="scan-1",
+            scanned_at="2026-05-17T12:00:00Z",
+        )
+    )
+
+    assert [record.path for record in records] == [str(fake_file.path) for fake_file in files]
+    assert [record.digest for record in records] == [
+        hashlib.sha256(fake_file.content).hexdigest() for fake_file in files
+    ]
+    assert {record.status for record in records} == {"ok"}
+
+
+def test_scan_yields_records_as_files_are_hashed() -> None:
+    files = (
+        FakeFile(path=Path("/root/a.txt"), content=b"a"),
+        FakeFile(path=Path("/root/b.txt"), content=b"bb"),
+    )
+    reader = MultiFileReader(files)
+
     records = scan_files(
         roots=(Path("/root"),),
         walk_files=lambda roots: (fake_file.path for fake_file in files),
@@ -33,11 +57,10 @@ def test_scan_hashes_every_regular_file_even_when_sizes_are_unique() -> None:
         scanned_at="2026-05-17T12:00:00Z",
     )
 
-    assert [record.path for record in records] == [str(fake_file.path) for fake_file in files]
-    assert [record.digest for record in records] == [
-        hashlib.sha256(fake_file.content).hexdigest() for fake_file in files
-    ]
-    assert {record.status for record in records} == {"ok"}
+    first = next(records)
+
+    assert first.path == "/root/a.txt"
+    assert reader.chunked_paths == [Path("/root/a.txt")]
 
 
 def test_scan_records_error_and_continues_after_unreadable_file() -> None:
@@ -48,12 +71,14 @@ def test_scan_records_error_and_continues_after_unreadable_file() -> None:
     )
     reader = MultiFileReader(files)
 
-    records = scan_files(
-        roots=(Path("/root"),),
-        walk_files=lambda roots: (fake_file.path for fake_file in files),
-        reader=reader,
-        scan_id="scan-1",
-        scanned_at="2026-05-17T12:00:00Z",
+    records = list(
+        scan_files(
+            roots=(Path("/root"),),
+            walk_files=lambda roots: (fake_file.path for fake_file in files),
+            reader=reader,
+            scan_id="scan-1",
+            scanned_at="2026-05-17T12:00:00Z",
+        )
     )
 
     assert [record.status for record in records] == ["ok", "error", "ok"]
@@ -75,14 +100,16 @@ def test_scan_stops_before_hashing_next_file_when_stop_signal_is_set() -> None:
         if record_count == 1:
             stop_signal.set()
 
-    records = scan_files(
-        roots=(Path("/root"),),
-        walk_files=lambda roots: (fake_file.path for fake_file in files),
-        reader=reader,
-        scan_id="scan-1",
-        scanned_at="2026-05-17T12:00:00Z",
-        stop_signal=stop_signal,
-        after_record=stop_after_first_record,
+    records = list(
+        scan_files(
+            roots=(Path("/root"),),
+            walk_files=lambda roots: (fake_file.path for fake_file in files),
+            reader=reader,
+            scan_id="scan-1",
+            scanned_at="2026-05-17T12:00:00Z",
+            stop_signal=stop_signal,
+            after_record=stop_after_first_record,
+        )
     )
 
     assert [record.path for record in records] == ["/root/a.txt"]
@@ -101,6 +128,7 @@ def test_hash_file_checks_stop_signal_between_chunks() -> None:
 class MultiFileReader:
     def __init__(self, fake_files: tuple[FakeFile, ...]) -> None:
         self._files = {fake_file.path: fake_file for fake_file in fake_files}
+        self.chunked_paths: list[Path] = []
 
     def stat(self, path: Path) -> tuple[int, int]:
         fake_file = self._files[path]
@@ -109,6 +137,7 @@ class MultiFileReader:
         return len(fake_file.content), fake_file.mtime_ns
 
     def chunks(self, path: Path, chunk_size: int) -> Iterator[bytes]:
+        self.chunked_paths.append(path)
         fake_file = self._files[path]
         if fake_file.open_error is not None:
             raise fake_file.open_error

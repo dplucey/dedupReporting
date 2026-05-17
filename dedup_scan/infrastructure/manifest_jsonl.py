@@ -46,7 +46,7 @@ def write_manifest(
     temp_path = _temporary_path(manifest_path)
 
     try:
-        with temp_path.open("w", encoding="utf-8") as file_handle:
+        with temp_path.open("w", encoding="utf-8", buffering=1) as file_handle:
             for record in records:
                 file_handle.write(json.dumps(_record_to_row(record), sort_keys=False))
                 file_handle.write("\n")

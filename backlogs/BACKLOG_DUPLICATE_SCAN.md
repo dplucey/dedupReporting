@@ -204,21 +204,21 @@ Files touched:
 
 Depends on: Workstream 0, Workstream B
 
-Status: Not Started
+Status: Complete
 
-Branch: `(tbd)`
+Branch: `feat-workstream-c-reporting`
 
-- [ ] ITEM-010: Group duplicates across manifests
+- [x] ITEM-010: Group duplicates across manifests
   - Test first: `tests/service/test_reporting.py::test_groups_duplicate_hashes_across_different_scan_ids` asserts matching digests from different manifests appear in one duplicate group.
   - Implementation: Add pure grouping by `(algorithm, digest)` for `status="ok"` records.
   - Refactor: None.
 
-- [ ] ITEM-011: Ignore error records and singleton hashes in duplicate reports
+- [x] ITEM-011: Ignore error records and singleton hashes in duplicate reports
   - Test first: `tests/service/test_reporting.py::test_duplicate_report_ignores_error_records_and_singletons` asserts only groups with at least two successful file records are returned.
   - Implementation: Filter records before grouping and emit only groups with `count > 1`.
   - Refactor: None.
 
-- [ ] ITEM-012: Provide text and JSON reporters
+- [x] ITEM-012: Provide text and JSON reporters
   - Test first: `tests/infrastructure/test_reporters.py::test_text_report_lists_digest_then_full_paths` and `tests/infrastructure/test_reporters.py::test_json_report_is_machine_readable` assert stable output shapes.
   - Implementation: Add reporter functions for human-readable text and JSON.
   - Refactor: None.

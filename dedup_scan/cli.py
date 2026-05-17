@@ -56,6 +56,7 @@ def _scan_command(args: argparse.Namespace, *, stop_signal: StopSignal | None) -
     if stop_signal is not None and stop_signal.is_set():
         raise StopRequested("scan stopped before start")
 
+    _validate_manifest_outside_roots(args.manifest, tuple(args.roots))
     scanned_at = _utc_timestamp()
     records = scan_files(
         roots=tuple(args.roots),
@@ -69,6 +70,14 @@ def _scan_command(args: argparse.Namespace, *, stop_signal: StopSignal | None) -
         raise StopRequested("scan stopped")
     write_manifest(args.manifest, records, stop_signal=stop_signal)
     return 0
+
+
+def _validate_manifest_outside_roots(manifest_path: Path, roots: tuple[Path, ...]) -> None:
+    resolved_manifest = manifest_path.resolve(strict=False)
+    for root in roots:
+        resolved_root = root.resolve(strict=False)
+        if resolved_manifest == resolved_root or resolved_root in resolved_manifest.parents:
+            raise ValueError("manifest path must be outside scan roots")
 
 
 def _report_command(args: argparse.Namespace, *, stop_signal: StopSignal | None) -> int:

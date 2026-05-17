@@ -164,31 +164,31 @@ Files touched:
 
 Depends on: Workstream 0
 
-Status: Not Started
+Status: Complete
 
-Branch: `(tbd)`
+Branch: `feat-workstream-b-manifest-jsonl`
 
-- [ ] ITEM-007: Write JSONL manifests atomically enough for local CLI use
+- [x] ITEM-007: Write JSONL manifests atomically enough for local CLI use
   - Test first: `tests/infrastructure/test_manifest_jsonl.py::test_write_manifest_emits_one_json_object_per_record` asserts newline-delimited JSON rows and stable schema fields.
   - Implementation: Add manifest writer using a temporary file in the target directory followed by replace.
   - Refactor: None.
 
-- [ ] ITEM-008: Read multiple manifests as a stream
+- [x] ITEM-008: Read multiple manifests as a stream
   - Test first: `tests/infrastructure/test_manifest_jsonl.py::test_read_manifests_streams_records_from_multiple_files` asserts records from multiple manifest files are yielded without loading the full files into memory.
   - Implementation: Add generator-based JSONL reader with schema/version validation.
   - Refactor: None.
 
-- [ ] ITEM-009: Reject malformed manifest rows loudly
+- [x] ITEM-009: Reject malformed manifest rows loudly
   - Test first: `tests/infrastructure/test_manifest_jsonl.py::test_read_manifest_reports_line_number_for_malformed_json` asserts an invalid row reports path and line number.
   - Implementation: Wrap JSON decode and schema errors with manifest location context.
   - Refactor: None.
 
-- [ ] ITEM-021: Stop manifest reading between rows when cancellation is requested
+- [x] ITEM-021: Stop manifest reading between rows when cancellation is requested
   - Test first: `tests/infrastructure/test_manifest_jsonl.py::test_read_manifests_stops_between_rows_when_stop_signal_is_set` reads a multi-row manifest, sets the stop signal after one yielded record, and asserts no additional rows are yielded.
   - Implementation: Add cooperative stop-signal support to manifest readers and check it between JSONL rows.
   - Refactor: None.
 
-- [ ] ITEM-029: Stop manifest writing between records when cancellation is requested
+- [x] ITEM-029: Stop manifest writing between records when cancellation is requested
   - Test first: `tests/infrastructure/test_manifest_jsonl.py::test_write_manifest_stops_between_records_when_stop_signal_is_set` writes multiple records through a writer that sets the stop signal after one record and asserts later records are not written.
   - Implementation: Add cooperative stop-signal support to manifest writing, check it before write start and between records, and document that cancellation cannot interrupt an OS write already in progress.
   - Refactor: None.

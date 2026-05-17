@@ -24,6 +24,25 @@ def test_scan_command_writes_manifest_for_all_files(tmp_path: Path, capsys: pyte
     assert all(row["algorithm"] == "sha256" for row in rows)
 
 
+def test_scan_command_rejects_manifest_inside_scan_root(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    root = tmp_path / "photos"
+    root.mkdir()
+    (root / "a.txt").write_text("alpha", encoding="utf-8")
+    manifest_path = root / "manifest.jsonl"
+
+    exit_code = main(["scan", str(root), "--manifest", str(manifest_path)])
+
+    captured = capsys.readouterr()
+    assert exit_code == 1
+    assert "manifest path must be outside scan roots" in captured.err
+    assert "Traceback" not in captured.err
+    assert not manifest_path.exists()
+    assert sorted(path.name for path in root.iterdir()) == ["a.txt"]
+
+
 def test_report_command_reads_multiple_manifests_and_prints_duplicates(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],

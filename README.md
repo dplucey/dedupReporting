@@ -16,6 +16,7 @@ Default behavior:
 
 - Hash every regular file with SHA-256.
 - Do not follow symlinks.
+- Require `--manifest` to be outside every scanned root.
 - Continue after unreadable files by writing `status: "error"` rows.
 - Report duplicate groups only.
 - Return zero for successful scans and reports, including reports with no duplicates.

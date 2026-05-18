@@ -7,8 +7,13 @@ from typing import Callable, Protocol
 from dedup_scan.infrastructure.filesystem import FilesystemReader, walk_regular_files
 from dedup_scan.infrastructure.manifest_jsonl import read_manifests, write_manifest
 from dedup_scan.infrastructure.reporters import render_json_report, render_text_report
+from dedup_scan.infrastructure.unique_reporters import (
+    render_unique_json_report,
+    render_unique_text_report,
+)
 from dedup_scan.service.reporting import duplicate_groups
 from dedup_scan.service.scanning import MAX_SCAN_WORKERS, StopRequested, scan_files, scan_files_parallel
+from dedup_scan.service.unique_compare import unique_to_target
 
 
 PROGRESS_EVERY_RECORDS = 1000
@@ -30,7 +35,11 @@ def main(
             return _scan_command(args, stop_signal=stop_signal)
         if args.command == "report":
             return _report_command(args, stop_signal=stop_signal)
+        if args.command == "unique-to-target":
+            return _unique_to_target_command(args, stop_signal=stop_signal)
         parser.error("missing command")
+    except SystemExit as exc:
+        return int(exc.code) if isinstance(exc.code, int) else 1
     except StopRequested as exc:
         print(f"error: stopped: {exc}", file=sys.stderr)
         return 1
@@ -52,6 +61,11 @@ def _build_parser() -> argparse.ArgumentParser:
     report_parser = subparsers.add_parser("report")
     report_parser.add_argument("manifests", nargs="+", type=Path)
     report_parser.add_argument("--format", choices=("text", "json"), default="text")
+
+    unique_parser = subparsers.add_parser("unique-to-target")
+    unique_parser.add_argument("manifests", nargs="+", type=Path)
+    unique_parser.add_argument("--against", required=True, type=Path)
+    unique_parser.add_argument("--format", choices=("text", "json"), default="text")
 
     return parser
 
@@ -120,6 +134,26 @@ def _report_command(args: argparse.Namespace, *, stop_signal: StopSignal | None)
         report = render_text_report(groups)
         if report:
             print(report)
+    return 0
+
+
+def _unique_to_target_command(args: argparse.Namespace, *, stop_signal: StopSignal | None) -> int:
+    if stop_signal is not None and stop_signal.is_set():
+        raise StopRequested("unique-to-target stopped before start")
+
+    report = unique_to_target(
+        incoming_records=read_manifests(tuple(args.manifests), stop_signal=stop_signal),
+        target_records=read_manifests((args.against,), stop_signal=stop_signal),
+        stop_signal=stop_signal,
+    )
+    if stop_signal is not None and stop_signal.is_set():
+        raise StopRequested("unique-to-target stopped")
+    if args.format == "json":
+        print(render_unique_json_report(report))
+    else:
+        rendered = render_unique_text_report(report)
+        if rendered:
+            print(rendered)
     return 0
 
 

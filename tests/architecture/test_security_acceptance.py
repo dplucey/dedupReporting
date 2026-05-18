@@ -4,6 +4,9 @@ from pathlib import Path
 
 import dedup_scan.cli as cli
 from dedup_scan.cli import main
+from dedup_scan.domain.records import FileHashRecord
+from dedup_scan.domain.unique import SkippedRecordCounts, UniqueContentGroup, UniqueContentReport
+from dedup_scan.infrastructure.unique_reporters import render_unique_json_report
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -76,6 +79,44 @@ def test_interrupted_parallel_scan_does_not_replace_final_manifest(
     assert not manifest_path.exists()
 
 
+def test_unique_compare_security_acceptance_criteria_are_enforced(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    incoming_manifest = tmp_path / "incoming.jsonl"
+    target_manifest = tmp_path / "target.jsonl"
+    incoming_manifest.write_text("not-json\n", encoding="utf-8")
+    target_manifest.write_text("", encoding="utf-8")
+    json_report = render_unique_json_report(
+        UniqueContentReport(
+            groups=(
+                UniqueContentGroup(
+                    algorithm="sha256",
+                    digest="new",
+                    records=(_record(path="/incoming/secret.txt", digest="new"),),
+                ),
+            ),
+            skipped=SkippedRecordCounts(),
+        )
+    )
+
+    exit_code = main(
+        [
+            "unique-to-target",
+            str(incoming_manifest),
+            "--against",
+            str(target_manifest),
+        ]
+    )
+    captured = capsys.readouterr()
+
+    assert exit_code == 1
+    assert "Traceback" not in captured.err
+    assert "content" not in json.loads(json_report)["unique_to_target"][0]["files"][0]
+    assert _forbidden_imports() == []
+    assert _scanned_path_mutation_calls() == []
+
+
 def _forbidden_imports() -> list[str]:
     violations: list[str] = []
     for source_path in (PROJECT_ROOT / "dedup_scan").rglob("*.py"):
@@ -95,8 +136,10 @@ def _scanned_path_mutation_calls() -> list[str]:
         Path("dedup_scan/cli.py"),
         Path("dedup_scan/service/scanning.py"),
         Path("dedup_scan/service/reporting.py"),
+        Path("dedup_scan/service/unique_compare.py"),
         Path("dedup_scan/infrastructure/filesystem.py"),
         Path("dedup_scan/infrastructure/reporters.py"),
+        Path("dedup_scan/infrastructure/unique_reporters.py"),
     ):
         source_path = PROJECT_ROOT / relative_path
         module = ast.parse(source_path.read_text(encoding="utf-8"))
@@ -113,6 +156,22 @@ def _imported_name(node: ast.AST) -> str:
     if isinstance(node, ast.ImportFrom) and node.module is not None:
         return node.module
     return ""
+
+
+def _record(*, path: str, digest: str) -> FileHashRecord:
+    return FileHashRecord(
+        scan_id="incoming-scan",
+        root_path="/incoming",
+        path=path,
+        relative_path=path.rsplit("/", maxsplit=1)[-1],
+        size_bytes=12,
+        mtime_ns=100,
+        algorithm="sha256",
+        digest=digest,
+        status="ok",
+        error=None,
+        scanned_at="2026-05-17T12:00:00Z",
+    )
 
 
 class ManualStopSignal:

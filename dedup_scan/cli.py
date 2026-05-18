@@ -8,7 +8,7 @@ from dedup_scan.infrastructure.filesystem import FilesystemReader, walk_regular_
 from dedup_scan.infrastructure.manifest_jsonl import read_manifests, write_manifest
 from dedup_scan.infrastructure.reporters import render_json_report, render_text_report
 from dedup_scan.service.reporting import duplicate_groups
-from dedup_scan.service.scanning import StopRequested, scan_files
+from dedup_scan.service.scanning import MAX_SCAN_WORKERS, StopRequested, scan_files, scan_files_parallel
 
 
 PROGRESS_EVERY_RECORDS = 1000
@@ -47,6 +47,7 @@ def _build_parser() -> argparse.ArgumentParser:
     scan_parser = subparsers.add_parser("scan")
     scan_parser.add_argument("roots", nargs="+", type=Path)
     scan_parser.add_argument("--manifest", required=True, type=Path)
+    scan_parser.add_argument("--workers", type=int, default=1)
 
     report_parser = subparsers.add_parser("report")
     report_parser.add_argument("manifests", nargs="+", type=Path)
@@ -60,20 +61,39 @@ def _scan_command(args: argparse.Namespace, *, stop_signal: StopSignal | None) -
         raise StopRequested("scan stopped before start")
 
     _validate_manifest_outside_roots(args.manifest, tuple(args.roots))
+    _validate_workers(args.workers)
     scanned_at = _utc_timestamp()
-    records = scan_files(
-        roots=tuple(args.roots),
-        walk_files=walk_regular_files,
-        reader=FilesystemReader(),
-        scan_id=_scan_id(scanned_at),
-        scanned_at=scanned_at,
-        stop_signal=stop_signal,
-        after_record=_progress_reporter(),
-    )
+    scan_kwargs = {
+        "roots": tuple(args.roots),
+        "walk_files": walk_regular_files,
+        "reader": FilesystemReader(),
+        "scan_id": _scan_id(scanned_at),
+        "scanned_at": scanned_at,
+        "stop_signal": stop_signal,
+        "after_record": _progress_reporter(),
+    }
+    if args.workers == 1:
+        records = scan_files(**scan_kwargs)
+    else:
+        records = scan_files_parallel(**scan_kwargs, workers=args.workers)
     if stop_signal is not None and stop_signal.is_set():
         raise StopRequested("scan stopped")
-    write_manifest(args.manifest, records, stop_signal=stop_signal)
+    write_manifest(args.manifest, _stop_checked_records(records, stop_signal), stop_signal=stop_signal)
     return 0
+
+
+def _stop_checked_records(records, stop_signal: StopSignal | None):
+    for record in records:
+        if stop_signal is not None and stop_signal.is_set():
+            raise StopRequested("scan stopped")
+        yield record
+        if stop_signal is not None and stop_signal.is_set():
+            raise StopRequested("scan stopped")
+
+
+def _validate_workers(workers: int) -> None:
+    if workers < 1 or workers > MAX_SCAN_WORKERS:
+        raise ValueError(f"workers must be between 1 and {MAX_SCAN_WORKERS}")
 
 
 def _progress_reporter() -> Callable[[int], None]:

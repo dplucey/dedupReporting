@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+import dedup_scan.cli as cli
 from dedup_scan.cli import main
 
 
@@ -41,6 +42,49 @@ def test_scan_command_rejects_manifest_inside_scan_root(
     assert "Traceback" not in captured.err
     assert not manifest_path.exists()
     assert sorted(path.name for path in root.iterdir()) == ["a.txt"]
+
+
+def test_scan_command_defaults_to_one_worker(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = tmp_path / "photos"
+    root.mkdir()
+    (root / "a.txt").write_text("alpha", encoding="utf-8")
+    manifest_path = tmp_path / "scan.jsonl"
+    calls: list[str] = []
+
+    original_scan_files = cli.scan_files
+
+    def tracking_scan_files(*args, **kwargs):
+        calls.append("serial")
+        return original_scan_files(*args, **kwargs)
+
+    def fail_parallel_scan(*args, **kwargs):
+        raise AssertionError("parallel scan should not be used by default")
+
+    monkeypatch.setattr(cli, "scan_files", tracking_scan_files)
+    monkeypatch.setattr(cli, "scan_files_parallel", fail_parallel_scan)
+
+    assert main(["scan", str(root), "--manifest", str(manifest_path)]) == 0
+
+    assert calls == ["serial"]
+
+
+def test_scan_command_rejects_workers_outside_supported_range_without_traceback(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    root = tmp_path / "photos"
+    root.mkdir()
+    manifest_path = tmp_path / "scan.jsonl"
+
+    for workers in ("0", "33"):
+        exit_code = main(["scan", str(root), "--manifest", str(manifest_path), "--workers", workers])
+        captured = capsys.readouterr()
+        assert exit_code == 1
+        assert "workers must be between 1 and 32" in captured.err
+        assert "Traceback" not in captured.err
 
 
 def test_report_command_reads_multiple_manifests_and_prints_duplicates(

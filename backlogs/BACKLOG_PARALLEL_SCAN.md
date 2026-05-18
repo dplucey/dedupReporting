@@ -124,26 +124,26 @@ Files touched:
 
 Depends on: Workstream 0
 
-Status: Not Started
+Status: Complete
 
-Branch: `(tbd)`
+Branch: `feat-parallel-scan-contract`
 
-- [ ] ITEM-048: Bound in-flight hash work
+- [x] ITEM-048: Bound in-flight hash work
   - Test first: `tests/service/test_scanning.py::test_parallel_scan_limits_in_flight_work` uses a controlled fake reader and asserts submitted-but-unconsumed work never exceeds `max_in_flight`.
   - Implementation: Use `ThreadPoolExecutor` with bounded submit/drain logic, defaulting `max_in_flight` to `workers * 4`.
   - Refactor: None.
 
-- [ ] ITEM-057: Bound concurrent file opens by worker count
+- [x] ITEM-057: Bound concurrent file opens by worker count
   - Test first: `tests/service/test_scanning.py::test_parallel_scan_never_opens_more_files_than_workers` uses a blocking fake reader and asserts concurrent opens do not exceed the configured worker count.
   - Implementation: Ensure each worker handles one file at a time and no extra reader threads are introduced.
   - Refactor: None.
 
-- [ ] ITEM-049: Convert per-file worker errors into error records
+- [x] ITEM-049: Convert per-file worker errors into error records
   - Test first: `tests/service/test_scanning.py::test_parallel_scan_records_worker_file_errors_and_continues` asserts one unreadable file yields an error record while other files still hash.
   - Implementation: Ensure worker execution uses existing `_scan_one_file` error-row behavior.
   - Refactor: None.
 
-- [ ] ITEM-050: Document concurrency ownership in service code
+- [x] ITEM-050: Document concurrency ownership in service code
   - Test first: `tests/service/test_scanning.py::test_parallel_scan_worker_pool_is_scoped_to_iterator_lifetime` asserts the iterator can be partially consumed and closed without leaked executor work.
   - Implementation: Scope executor lifetime inside the generator and document producer/worker/result ownership near the parallel orchestration.
   - Refactor: None.

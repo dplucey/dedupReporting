@@ -14,6 +14,13 @@ $ .venv/bin/python -m dedup_scan.cli report manifests/photos.jsonl manifests/arc
 $ .venv/bin/python -m dedup_scan.cli report manifests/photos.jsonl --format json
 ```
 
+Serial scan is the default. Parallel hashing is opt-in:
+
+```bash
+$ .venv/bin/python -m dedup_scan.cli scan /data/photos --manifest manifests/photos.jsonl --workers 1
+$ .venv/bin/python -m dedup_scan.cli scan /data/photos --manifest manifests/photos.jsonl --workers 2
+```
+
 ## Installed Usage
 
 After installing the package, the console command is `dedup-scan`:
@@ -31,6 +38,8 @@ Default behavior:
 - Hash every regular file with SHA-256.
 - Do not follow symlinks.
 - Require `--manifest` to be outside every scanned root.
+- Use `--workers 1` by default, preserving serial traversal and output order.
+- Use `--workers 2` through `--workers 32` to opt into parallel hashing; output order is unspecified when workers exceed 1.
 - Continue after unreadable files by writing `status: "error"` rows.
 - Stream scan records to a temporary manifest while scanning, then atomically replace the final manifest path on success.
 - Print scan progress to stderr every 1000 processed records.
@@ -70,6 +79,7 @@ Known limitations:
 
 - SHA-256 is the only supported digest algorithm.
 - Manifests contain full local paths and should be handled as Internal metadata.
+- Parallel scans can improve throughput on SSDs and some network filesystems, but may reduce performance on spinning disks or saturated mounts. Use `--workers 1` for lowest impact and deterministic traversal order.
 - No persistent database or cross-host coordination is included.
 
 ## Local Quality Gate

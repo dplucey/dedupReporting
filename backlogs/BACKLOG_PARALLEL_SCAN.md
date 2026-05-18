@@ -158,21 +158,21 @@ Files touched:
 
 Depends on: Workstream A
 
-Status: Not Started
+Status: Complete
 
-Branch: `(tbd)`
+Branch: `feat-parallel-scan-contract`
 
-- [ ] ITEM-051: Add scan workers option with serial default
+- [x] ITEM-051: Add scan workers option with serial default
   - Test first: `tests/test_cli.py::test_scan_command_defaults_to_one_worker` asserts scan uses the serial scan path unless `--workers` is set above 1.
   - Implementation: Add `--workers` to the scan command with default `1`; route `workers == 1` to serial `scan_files`, otherwise to `scan_files_parallel`.
   - Refactor: None.
 
-- [ ] ITEM-052: Validate CLI workers value
+- [x] ITEM-052: Validate CLI workers value
   - Test first: `tests/test_cli.py::test_scan_command_rejects_workers_outside_supported_range_without_traceback` invokes `--workers 0` and `--workers 33` and asserts non-zero exit without traceback text.
   - Implementation: Validate worker count at CLI or service boundary and reuse generic error handling.
   - Refactor: None.
 
-- [ ] ITEM-053: Document parallel scan tuning
+- [x] ITEM-053: Document parallel scan tuning
   - Test first: `tests/test_readme_examples.py::test_readme_scan_commands_with_workers_match_cli_parser` asserts README examples with `--workers 1` and `--workers 2` parse.
   - Implementation: Document default `--workers 1`, opt-in `--workers 2+`, output order caveat, SSD/HDD/network tuning guidance, and single-writer manifest guarantee.
   - Refactor: None.

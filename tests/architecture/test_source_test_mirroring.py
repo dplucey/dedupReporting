@@ -6,13 +6,18 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SOURCE_TO_TEST = {
     Path("dedup_scan/cli.py"): Path("tests/test_cli.py"),
     Path("dedup_scan/domain/records.py"): Path("tests/domain/test_records.py"),
+    Path("dedup_scan/domain/unique.py"): Path("tests/domain/test_unique.py"),
     Path("dedup_scan/service/scanning.py"): Path("tests/service/test_scanning.py"),
     Path("dedup_scan/service/reporting.py"): Path("tests/service/test_reporting.py"),
+    Path("dedup_scan/service/unique_compare.py"): Path("tests/service/test_unique_compare.py"),
     Path("dedup_scan/infrastructure/filesystem.py"): Path("tests/infrastructure/test_filesystem.py"),
     Path("dedup_scan/infrastructure/manifest_jsonl.py"): Path(
         "tests/infrastructure/test_manifest_jsonl.py"
     ),
     Path("dedup_scan/infrastructure/reporters.py"): Path("tests/infrastructure/test_reporters.py"),
+    Path("dedup_scan/infrastructure/unique_reporters.py"): Path(
+        "tests/infrastructure/test_unique_reporters.py"
+    ),
 }
 
 

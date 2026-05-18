@@ -1,8 +1,11 @@
 # Unique Content Compare Backlog
 
 Planned: 2026-05-17
-Status: OPEN
-Completed: (tbd)
+Status: COMPLETE
+Completed: 2026-05-17
+Archived: 2026-05-17
+Total Items: 17
+Carried Forward: 0
 
 ## Problem
 
@@ -17,12 +20,13 @@ Prior art: `rsync --checksum` can identify transfer candidates but is action-ori
 Add a read-only comparison/reporting path over existing JSONL manifests. The scanner remains unchanged. Operators first scan target and incoming directories, then run a compare command over the manifests:
 
 ```bash
-dedup-scan unique manifests/incoming.jsonl --against manifests/target.jsonl --format text
+dedup-scan unique-to-target INCOMING_MANIFEST... --against TARGET_MANIFEST --format text
 ```
 
 Definition:
 
 - **Unique-to-target file**: an incoming `status="ok"` file record whose `(algorithm, digest)` is absent from all target `status="ok"` records.
+- **Command shape**: one or more incoming manifests are compared against exactly one target manifest.
 - **Multiplicity preserved**: every matching incoming path is listed, even when multiple incoming paths share the same unique digest.
 - **Requires inspection**: a unique-to-target digest with more than one incoming file record. The report flags these duplicate-new groups so the operator can decide whether to add all paths or one representative later.
 - Incoming and target `status="error"` rows do not participate in hash-set membership. They are excluded from add candidates and counted as skipped input.
@@ -109,16 +113,16 @@ Files touched:
 
 Depends on: Nothing
 
-Status: Not Started
+Status: Complete
 
-Branch: `(tbd)`
+Branch: `feat/unique-domain-contract`
 
-- [ ] ITEM-031: Define immutable unique-content report records
+- [x] ITEM-031: Define immutable unique-content report records
   - Test first: `tests/domain/test_unique.py::test_unique_content_group_flags_duplicate_new_records_for_inspection` asserts `requires_inspection` is false for one file and true for multiple files.
   - Implementation: Add frozen dataclasses for `UniqueContentGroup`, `SkippedRecordCounts`, and `UniqueContentReport`.
   - Refactor: None.
 
-- [ ] ITEM-032: Extend source/test mirroring for unique domain module
+- [x] ITEM-032: Extend source/test mirroring for unique domain module
   - Test first: `tests/architecture/test_source_test_mirroring.py::test_every_non_package_source_module_has_matching_test_module` expects `dedup_scan/domain/unique.py` to map to `tests/domain/test_unique.py`.
   - Implementation: Extend the existing mirroring map.
   - Refactor: None.
@@ -134,26 +138,31 @@ Files touched:
 
 Depends on: Workstream 0
 
-Status: Not Started
+Status: Complete
 
-Branch: `(tbd)`
+Branch: `feat/unique-compare-service`
 
-- [ ] ITEM-033: Identify incoming records absent from target hashes
+- [x] ITEM-033: Identify incoming records absent from target hashes
   - Test first: `tests/service/test_unique_compare.py::test_incoming_records_absent_from_target_hashes_are_unique` asserts incoming ok records absent from target are returned as unique groups.
   - Implementation: Add pure comparison by `(algorithm, digest)` over incoming and target records.
   - Refactor: None.
 
-- [ ] ITEM-034: Preserve incoming multiplicity and flag inspection groups
+- [x] ITEM-034: Preserve incoming multiplicity and flag inspection groups
   - Test first: `tests/service/test_unique_compare.py::test_preserves_duplicate_new_incoming_records_and_flags_inspection` asserts two incoming files with the same new digest are both listed in one group with `requires_inspection=True`.
   - Implementation: Group unique incoming records by `(algorithm, digest)` without dropping duplicate incoming paths.
   - Refactor: None.
 
-- [ ] ITEM-035: Exclude error records from uniqueness decisions
+- [x] ITEM-035: Exclude error records from uniqueness decisions
   - Test first: `tests/service/test_unique_compare.py::test_error_records_are_counted_as_skipped_and_not_unique_candidates` asserts incoming and target error rows are counted but never used as candidates or blockers.
   - Implementation: Track skipped incoming and target error counts on the report.
   - Refactor: None.
 
-- [ ] ITEM-036: Enforce service boundary for unique compare
+- [x] ITEM-059: Stop unique comparison when cancellation is requested
+  - Test first: `tests/service/test_unique_compare.py::test_unique_compare_stops_when_stop_signal_is_set` asserts comparison stops before consuming more incoming records after cancellation.
+  - Implementation: Add optional stop-signal support to the unique comparison service and check between records.
+  - Refactor: None.
+
+- [x] ITEM-036: Enforce service boundary for unique compare
   - Test first: `tests/architecture/test_import_boundaries.py::test_service_layer_does_not_import_infrastructure_adapters` asserts `dedup_scan.service.unique_compare` imports no infrastructure modules.
   - Implementation: Extend existing architecture test coverage naturally through module discovery.
   - Refactor: None.
@@ -168,21 +177,21 @@ Files touched:
 
 Depends on: Workstream 0, Workstream A
 
-Status: Not Started
+Status: Complete
 
-Branch: `(tbd)`
+Branch: `feat/unique-reporters`
 
-- [ ] ITEM-037: Render text unique report with inspection flags
+- [x] ITEM-037: Render text unique report with inspection flags
   - Test first: `tests/infrastructure/test_unique_reporters.py::test_text_unique_report_marks_duplicate_new_groups_for_inspection` asserts text output lists digest, count, paths, and an inspection marker for duplicate-new groups.
   - Implementation: Add text renderer for `UniqueContentReport`.
   - Refactor: None.
 
-- [ ] ITEM-038: Render JSON unique report
+- [x] ITEM-038: Render JSON unique report
   - Test first: `tests/infrastructure/test_unique_reporters.py::test_json_unique_report_is_machine_readable` asserts the documented JSON output shape including `requires_inspection` and skipped counts.
   - Implementation: Add JSON renderer for `UniqueContentReport`.
   - Refactor: None.
 
-## Workstream C: CLI Unique Command
+## Workstream C: CLI Unique-To-Target Command
 
 Files touched:
 
@@ -192,22 +201,32 @@ Files touched:
 
 Depends on: Workstream A, Workstream B
 
-Status: Not Started
+Status: Complete
 
-Branch: `(tbd)`
+Branch: `feat/unique-cli-command`
 
-- [ ] ITEM-039: Add unique command
-  - Test first: `tests/test_cli.py::test_unique_command_compares_incoming_manifest_against_target_manifest` invokes `dedup-scan unique INCOMING --against TARGET --format text` and asserts unique incoming paths are printed while target-existing hashes are omitted.
+- [x] ITEM-039: Add unique-to-target command
+  - Test first: `tests/test_cli.py::test_unique_to_target_command_accepts_multiple_incoming_manifests_against_one_target_manifest` invokes `dedup-scan unique-to-target INCOMING1 INCOMING2 --against TARGET --format text` and asserts unique incoming paths are printed while target-existing hashes are omitted.
   - Implementation: Wire manifest readers, unique comparison service, and text/JSON reporters into the CLI composition root.
   - Refactor: None.
 
-- [ ] ITEM-040: Keep unique command errors generic
-  - Test first: `tests/test_cli.py::test_unique_command_errors_are_generic_without_stack_traces` invokes the unique command with an invalid manifest and asserts non-zero exit without traceback text.
+- [x] ITEM-061: Require exactly one target manifest for unique-to-target command
+  - Test first: `tests/test_cli.py::test_unique_to_target_command_requires_exactly_one_against_manifest` invokes the unique-to-target command without `--against` and with two target manifests, and asserts non-zero exit without traceback text.
+  - Implementation: Configure CLI parser so `--against` is required and accepts exactly one path.
+  - Refactor: None.
+
+- [x] ITEM-040: Keep unique-to-target command errors generic
+  - Test first: `tests/test_cli.py::test_unique_to_target_command_errors_are_generic_without_stack_traces` invokes the unique-to-target command with an invalid manifest and asserts non-zero exit without traceback text.
   - Implementation: Reuse existing top-level CLI exception handling.
   - Refactor: None.
 
-- [ ] ITEM-041: Document unique compare workflow
-  - Test first: `tests/test_readme_examples.py::test_readme_scan_report_and_unique_commands_match_cli_parser` asserts README scan/report/unique examples parse with the CLI parser.
+- [x] ITEM-060: Wire unique-to-target command cancellation through manifest readers
+  - Test first: `tests/test_cli.py::test_unique_to_target_command_wires_stop_signal_to_manifest_readers` invokes the unique-to-target command with an injected stop signal and asserts non-zero exit without traceback text.
+  - Implementation: Pass the CLI stop signal to `read_manifests` and the unique comparison service.
+  - Refactor: None.
+
+- [x] ITEM-041: Document unique compare workflow
+  - Test first: `tests/test_readme_examples.py::test_readme_scan_report_and_unique_to_target_commands_match_cli_parser` asserts README scan/report/unique-to-target examples parse with the CLI parser.
   - Implementation: Add README usage, output semantics, multiplicity-preserved note, and inspection warning.
   - Refactor: None.
 
@@ -224,23 +243,23 @@ Files touched:
 
 Depends on: Workstream C
 
-Status: Not Started
+Status: Complete
 
-Branch: `(tbd)`
+Branch: `feat/unique-invariant-verification`
 
-- [ ] ITEM-042: Verify unique compare never touches manifest paths
+- [x] ITEM-042: Verify unique compare never touches manifest paths
   - Test first: `tests/architecture/test_reporting_boundaries.py::test_unique_compare_uses_manifest_records_without_filesystem_access` builds incoming and target records with nonexistent original paths and asserts comparison/report rendering succeeds without stat or open calls.
   - Implementation: Add boundary test for unique comparison path.
   - Refactor: None.
 
-- [ ] ITEM-043: Verify security acceptance for unique compare
+- [x] ITEM-043: Verify security acceptance for unique compare
   - Test first: `tests/architecture/test_security_acceptance.py::test_unique_compare_security_acceptance_criteria_are_enforced` asserts no outbound network imports, no original-path mutation APIs, no file-content fields in JSON output, and no stack traces in CLI errors.
   - Implementation: Extend existing security acceptance checks for unique modules.
   - Refactor: None.
 
-- [ ] ITEM-044: Verify dependency and cancellation policies remain intact
-  - Test first: `tests/architecture/test_dependency_policy.py::test_project_remains_stdlib_only_after_unique_compare` and `tests/architecture/test_cancellation_contract.py::test_public_io_entrypoints_accept_stop_signal` assert no runtime dependencies and unique CLI/manifest paths preserve cancellation contracts.
-  - Implementation: Extend existing policy tests.
+- [x] ITEM-044: Verify dependency and cancellation policies remain intact
+  - Test first: `tests/architecture/test_dependency_policy.py::test_project_remains_stdlib_only_after_unique_compare` and `tests/architecture/test_cancellation_contract.py::test_public_io_entrypoints_accept_stop_signal` assert no runtime dependencies and unique comparison service, manifest readers, and CLI composition paths accept or propagate `stop_signal`.
+  - Implementation: Extend existing policy tests for unique comparison cancellation propagation.
   - Refactor: None.
 
 ## Dependency Map
@@ -263,8 +282,8 @@ Parallel execution plan:
 
 ## Approval Gate
 
-Status: CHANGES_REQUESTED
-Decision: Changes required
+Status: APPROVED
+Decision: Approved
 - Unique-to-target semantics preserve incoming multiplicity.
 - Duplicate-new groups are explicitly flagged for operator inspection.
 - Feature remains report-only; no copy/move/apply behavior is included.

@@ -3,7 +3,7 @@ from pathlib import Path
 from dedup_scan.cli import _build_parser
 
 
-def test_readme_scan_and_report_commands_match_cli_parser() -> None:
+def test_readme_scan_report_and_unique_to_target_commands_match_cli_parser() -> None:
     readme = Path("README.md").read_text(encoding="utf-8")
     commands = [
         line.removeprefix("$ ").strip()
@@ -16,6 +16,7 @@ def test_readme_scan_and_report_commands_match_cli_parser() -> None:
         ".venv/bin/python -m dedup_scan.cli scan /data/photos --manifest manifests/photos.jsonl",
         ".venv/bin/python -m dedup_scan.cli report manifests/photos.jsonl manifests/archive.jsonl --format text",
         ".venv/bin/python -m dedup_scan.cli report manifests/photos.jsonl --format json",
+        ".venv/bin/python -m dedup_scan.cli unique-to-target manifests/incoming.jsonl --against manifests/photos.jsonl --format text",
     ]
 
     parser = _build_parser()

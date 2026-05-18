@@ -12,7 +12,7 @@ def test_project_has_no_runtime_dependencies() -> None:
     assert project.get("dependencies", []) == []
 
 
-def test_project_remains_stdlib_only_after_all_workstreams() -> None:
+def test_project_remains_stdlib_only_after_unique_compare() -> None:
     pyproject = tomllib.loads((PROJECT_ROOT / "pyproject.toml").read_text())
     project = pyproject["project"]
 

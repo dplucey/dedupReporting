@@ -8,6 +8,7 @@ from dedup_scan.service import scanning
 def test_public_io_entrypoints_accept_stop_signal() -> None:
     entrypoints = (
         scanning.scan_files,
+        scanning.scan_files_parallel,
         scanning.hash_file,
         manifest_jsonl.write_manifest,
         manifest_jsonl.read_manifests,

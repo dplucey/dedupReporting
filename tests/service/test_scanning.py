@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from dedup_scan.service.scanning import StopRequested, hash_file, scan_files
+from dedup_scan.service.scanning import StopRequested, hash_file, scan_files, scan_files_parallel
 
 
 @dataclass(frozen=True)
@@ -123,6 +123,95 @@ def test_hash_file_checks_stop_signal_between_chunks() -> None:
         hash_file(chunks, stop_signal=stop_signal)
 
     assert chunks.chunks_read == 1
+
+
+def test_parallel_scan_hashes_every_regular_file_once() -> None:
+    files = (
+        FakeFile(path=Path("/root/a.txt"), content=b"a"),
+        FakeFile(path=Path("/root/b.txt"), content=b"bb"),
+        FakeFile(path=Path("/root/c.txt"), content=b"ccc"),
+    )
+    reader = MultiFileReader(files)
+
+    records = list(
+        scan_files_parallel(
+            roots=(Path("/root"),),
+            walk_files=lambda roots: (fake_file.path for fake_file in files),
+            reader=reader,
+            scan_id="scan-1",
+            scanned_at="2026-05-17T12:00:00Z",
+            workers=2,
+        )
+    )
+
+    assert {record.path for record in records} == {str(fake_file.path) for fake_file in files}
+    assert sorted(reader.chunked_paths) == sorted(fake_file.path for fake_file in files)
+
+
+def test_parallel_scan_rejects_worker_count_outside_supported_range() -> None:
+    files = (FakeFile(path=Path("/root/a.txt"), content=b"a"),)
+    reader = MultiFileReader(files)
+
+    with pytest.raises(ValueError, match="workers must be between 1 and 32"):
+        list(
+            scan_files_parallel(
+                roots=(Path("/root"),),
+                walk_files=lambda roots: (fake_file.path for fake_file in files),
+                reader=reader,
+                scan_id="scan-1",
+                scanned_at="2026-05-17T12:00:00Z",
+                workers=0,
+            )
+        )
+
+    with pytest.raises(ValueError, match="workers must be between 1 and 32"):
+        list(
+            scan_files_parallel(
+                roots=(Path("/root"),),
+                walk_files=lambda roots: (fake_file.path for fake_file in files),
+                reader=reader,
+                scan_id="scan-1",
+                scanned_at="2026-05-17T12:00:00Z",
+                workers=33,
+            )
+        )
+
+
+def test_parallel_scan_stops_submitting_new_work_when_stop_signal_is_set() -> None:
+    stop_signal = ManualStopSignal()
+    files = (
+        FakeFile(path=Path("/root/a.txt"), content=b"a"),
+        FakeFile(path=Path("/root/b.txt"), content=b"bb"),
+        FakeFile(path=Path("/root/c.txt"), content=b"ccc"),
+    )
+    yielded_paths: list[Path] = []
+    reader = MultiFileReader(files)
+
+    def walk_files(roots: tuple[Path, ...]) -> Iterator[Path]:
+        for fake_file in files:
+            yielded_paths.append(fake_file.path)
+            yield fake_file.path
+
+    def stop_after_first_record(record_count: int) -> None:
+        if record_count == 1:
+            stop_signal.set()
+
+    records = list(
+        scan_files_parallel(
+            roots=(Path("/root"),),
+            walk_files=walk_files,
+            reader=reader,
+            scan_id="scan-1",
+            scanned_at="2026-05-17T12:00:00Z",
+            workers=2,
+            max_in_flight=1,
+            stop_signal=stop_signal,
+            after_record=stop_after_first_record,
+        )
+    )
+
+    assert [record.path for record in records] == ["/root/a.txt"]
+    assert yielded_paths == [Path("/root/a.txt")]
 
 
 class MultiFileReader:

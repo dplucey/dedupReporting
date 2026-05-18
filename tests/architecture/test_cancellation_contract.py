@@ -17,3 +17,12 @@ def test_public_io_entrypoints_accept_stop_signal() -> None:
 
     for entrypoint in entrypoints:
         assert "stop_signal" in inspect.signature(entrypoint).parameters
+
+
+def test_readme_documents_parallel_scan_cancellation_and_shutdown() -> None:
+    with open("README.md", encoding="utf-8") as file_handle:
+        readme = file_handle.read()
+
+    assert "worker pool is scoped to each scan" in readme
+    assert "Interrupted scans exit non-zero" in readme
+    assert "final manifest path is not replaced" in readme

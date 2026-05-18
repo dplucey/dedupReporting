@@ -75,6 +75,8 @@ Reporting consumes manifests only. It does not open, stat, delete, move, link, c
 
 Cancellation is cooperative. Scan traversal checks for stop requests before each file. Hashing checks between chunks and cannot interrupt an OS read already in progress. Manifest reading and writing check between rows/records and cannot interrupt an OS read or write already in progress. A hidden temporary manifest is created in the target manifest directory during scans and is replaced into the final path only after a successful scan.
 
+For parallel scans, the worker pool is scoped to each scan and is shut down before the command exits. Interrupted scans exit non-zero, stop submitting new work, drain or cancel in-flight work through the scoped worker pool, and the final manifest path is not replaced.
+
 Known limitations:
 
 - SHA-256 is the only supported digest algorithm.

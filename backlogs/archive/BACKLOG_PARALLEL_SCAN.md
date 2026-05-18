@@ -1,8 +1,11 @@
 # Parallel Scan Backlog
 
 Planned: 2026-05-17
-Status: OPEN
-Completed: (tbd)
+Status: COMPLETE
+Completed: 2026-05-17
+Archived: 2026-05-17
+Total items: 14
+Carried forward: None
 
 ## Problem
 
@@ -189,26 +192,26 @@ Files touched:
 
 Depends on: Workstream B
 
-Status: Not Started
+Status: Complete
 
-Branch: `(tbd)`
+Branch: `feat-parallel-scan-contract`
 
-- [ ] ITEM-054: Verify manifest writer remains single-threaded
+- [x] ITEM-054: Verify manifest writer remains single-threaded
   - Test first: `tests/architecture/test_security_acceptance.py::test_parallel_scan_preserves_single_manifest_writer_invariant` asserts parallel service does not import or call manifest writing and CLI still calls one writer with an iterator.
   - Implementation: Add architecture check over service/CLI imports and call shape.
   - Refactor: None.
 
-- [ ] ITEM-058: Verify interrupted parallel scans do not replace final manifest
+- [x] ITEM-058: Verify interrupted parallel scans do not replace final manifest
   - Test first: `tests/architecture/test_security_acceptance.py::test_interrupted_parallel_scan_does_not_replace_final_manifest` asserts a cancelled parallel scan exits non-zero and leaves the final manifest path absent or unchanged.
   - Implementation: Ensure CLI finalization treats cancellation as failure and relies on manifest writer cleanup/final replace rules.
   - Refactor: None.
 
-- [ ] ITEM-055: Verify no dependency or boundary regressions
+- [x] ITEM-055: Verify no dependency or boundary regressions
   - Test first: `tests/architecture/test_import_boundaries.py::test_service_layer_does_not_import_infrastructure_adapters` and `tests/architecture/test_source_test_mirroring.py::test_every_non_package_source_module_has_matching_test_module` remain green with parallel scan.
   - Implementation: Extend existing invariant data only if new modules are added.
   - Refactor: None.
 
-- [ ] ITEM-056: Verify cancellation and shutdown documentation
+- [x] ITEM-056: Verify cancellation and shutdown documentation
   - Test first: `tests/architecture/test_cancellation_contract.py::test_public_io_entrypoints_accept_stop_signal` plus README assertions verify parallel scan cancellation/shutdown behavior is documented.
   - Implementation: Extend README and architecture tests for worker ownership, stop signal, and executor shutdown.
   - Refactor: None.

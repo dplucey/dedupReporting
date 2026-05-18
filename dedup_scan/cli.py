@@ -78,8 +78,17 @@ def _scan_command(args: argparse.Namespace, *, stop_signal: StopSignal | None) -
         records = scan_files_parallel(**scan_kwargs, workers=args.workers)
     if stop_signal is not None and stop_signal.is_set():
         raise StopRequested("scan stopped")
-    write_manifest(args.manifest, records, stop_signal=stop_signal)
+    write_manifest(args.manifest, _stop_checked_records(records, stop_signal), stop_signal=stop_signal)
     return 0
+
+
+def _stop_checked_records(records, stop_signal: StopSignal | None):
+    for record in records:
+        if stop_signal is not None and stop_signal.is_set():
+            raise StopRequested("scan stopped")
+        yield record
+        if stop_signal is not None and stop_signal.is_set():
+            raise StopRequested("scan stopped")
 
 
 def _validate_workers(workers: int) -> None:
